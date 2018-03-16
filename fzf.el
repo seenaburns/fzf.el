@@ -244,7 +244,7 @@
 (defun fzf-find-file (&optional directory)
   (interactive)
   (let ((d (fzf/resolve-directory directory)))
-    (fzf
+    (fzf-base
     (lambda (x)
         (let ((f (expand-file-name x d)))
         (when (file-exists-p f)
