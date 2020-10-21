@@ -1,0 +1,3 @@
+#!/usr/bin/env dash
+cat /tmp/nightFzf.txt | fzf "$@"
+exit 0
