@@ -59,7 +59,7 @@
   :type 'string
   :group 'fzf)
 
-(defcustom fzf/args "-x --color bw --print-query"
+(defcustom fzf/args "--color light --print-query"
   "Additional arguments to pass into fzf."
   :type 'string
   :group 'fzf)
@@ -81,30 +81,30 @@
    ((string-match-p "exited abnormally" msg) (car (last (split-string msg))))
    "-1"
    )
-)
+  )
 
-; Awkward internal, global variable to save the reference to the 'term-handle-exit hook so it can be
-; deleted
+                                        ; Awkward internal, global variable to save the reference to the 'term-handle-exit hook so it can be
+                                        ; deleted
 (setq fzf-hook nil)
 
 (defun fzf-close()
   (interactive)
 
-  ; Remove hook first so it doesn't trigger when process is killed
+                                        ; Remove hook first so it doesn't trigger when process is killed
   (when fzf-hook (advice-remove 'term-handle-exit fzf-hook))
-  ; Delete all hooks on 'term-handle-exit. Potentially unnecessary
+                                        ; Delete all hooks on 'term-handle-exit. Potentially unnecessary
   (advice-mapc (lambda (advice _props) (advice-remove 'term-handle-exit advice)) 'term-handle-exit)
   (setq fzf-hook nil)
 
-  ; Kill process so user isn't prompted
+                                        ; Kill process so user isn't prompted
   (when (get-process "fzf")
     (delete-process (get-process "fzf")))
 
-  ; Kill buffer and restore window
+                                        ; Kill buffer and restore window
   (when (get-buffer "*fzf*")
     (kill-buffer "*fzf*")
     (jump-to-register :fzf-windows))
-)
+  )
 
 
 (defun fzf/after-term-handle-exit (action)
@@ -113,36 +113,36 @@
     (let ((exit-code (fzf/exit-code-from-event msg)))
       (message (format "exit code %s" exit-code))
       (if (string= "0" exit-code)
-        ; Run action on result of fzf if exit code is 0
-        (let* ((text (buffer-substring-no-properties (point-min) (point-max)))
-                (lines (split-string text "\n" t "\s*>\s+"))
-                (target (car (last (butlast lines 1))))
-            )
-            ; Kill fzf and restore windows
-            ; Killing has to happen before applying the action so functions like swaping the buffer
-            ; will apply to the right window
+                                        ; Run action on result of fzf if exit code is 0
+          (let* ((text (buffer-substring-no-properties (point-min) (point-max)))
+                 (lines (split-string text "\n" t "\s*>\s+"))
+                 (target (car (last (butlast lines 1))))
+                 )
+                                        ; Kill fzf and restore windows
+                                        ; Killing has to happen before applying the action so functions like swaping the buffer
+                                        ; will apply to the right window
             (kill-buffer "*fzf*")
             (jump-to-register :fzf-windows)
 
             (message (format "target %s" target))
             (funcall action target)
-        )
-        ; Kill fzf and restore windows
+            )
+                                        ; Kill fzf and restore windows
         (kill-buffer "*fzf*")
         (jump-to-register :fzf-windows)
         (message (format "FZF exited with code %s" exit-code))
+        )
       )
-    )
 
-    ; Clean up advice handler by calling remove with same lambda
+                                        ; Clean up advice handler by calling remove with same lambda
     (advice-remove 'term-handle-exit (fzf/after-term-handle-exit action))
+    )
   )
-)
 
 (defun fzf/start (directory action)
   (require 'term)
 
-  ; Clean up existing fzf
+                                        ; Clean up existing fzf
   (fzf-close)
 
   (window-configuration-to-register :fzf-windows)
@@ -171,40 +171,41 @@
     (setq-local scroll-conservatively 0)
     (setq-local term-suppress-hard-newline t) ;for paths wider than the window
     (setq-local show-trailing-whitespace nil)
-    (setq-local truncate-lines t)
+    ;; (setq-local truncate-lines t)
+    (setq-local display-line-numbers nil)
     (face-remap-add-relative 'mode-line '(:box nil))
 
     (term-char-mode)
     (setq mode-line-format (format "   FZF  %s" directory))))
 
 (defun fzf-with-command (command action &optional directory)
-  ; Set FZF_DEFAULT_COMMAND and then call fzf/start. If command is nil, leave FZF_DEFAULT_COMMAND
-  ; alone and use the users normal command
-  ;
-  ; For some inputs it would be much more efficient to directly pass the output to FZF rather than
-  ; capture in emacs, then pass to FZF. This function takes a command and uses/abuses
-  ; FZF_DEFAULT_COMMAND to run and pass the output to FZF
+                                        ; Set FZF_DEFAULT_COMMAND and then call fzf/start. If command is nil, leave FZF_DEFAULT_COMMAND
+                                        ; alone and use the users normal command
+                                        ;
+                                        ; For some inputs it would be much more efficient to directly pass the output to FZF rather than
+                                        ; capture in emacs, then pass to FZF. This function takes a command and uses/abuses
+                                        ; FZF_DEFAULT_COMMAND to run and pass the output to FZF
   (interactive)
   (if command
-    (let
-      ((process-environment (cons (concat "FZF_DEFAULT_COMMAND=" command "") process-environment)))
-      (fzf/start directory action))
+      (let
+          ((process-environment (cons (concat "FZF_DEFAULT_COMMAND=" command "") process-environment)))
+        (fzf/start directory action))
     (fzf/start directory action)
+    )
   )
-)
 
 (defun fzf-with-entries (entries action &optional directory)
   "`entries' is a list of strings that is piped into `fzf' as a source."
-  ; FZF will read from stdin only if it detects stdin is not a tty, which amounts to something being
-  ; piped in. Unfortunately the emacs term-exec code runs /bin/sh -c exec "command", so it cannot
-  ; take in a pipeline of shell commands. Like bling/fzf.el/pull/20, abuse the FZF_DEFAULT_COMMAND,
-  ; environment var
+                                        ; FZF will read from stdin only if it detects stdin is not a tty, which amounts to something being
+                                        ; piped in. Unfortunately the emacs term-exec code runs /bin/sh -c exec "command", so it cannot
+                                        ; take in a pipeline of shell commands. Like bling/fzf.el/pull/20, abuse the FZF_DEFAULT_COMMAND,
+                                        ; environment var
   (interactive)
   (if entries
-    (fzf-with-command (concat "echo \"" (mapconcat (lambda (x) x) entries "\n") "\"") action directory)
+      (fzf-with-command (concat "echo \"" (mapconcat (lambda (x) x) entries "\n") "\"") action directory)
     (message "FZF not started because contents nil")
+    )
   )
-)
 
 (defun fzf-base (action &optional directory)
   "Run FZF without setting default command"
@@ -213,21 +214,21 @@
   )
 
 (defun fzf/resolve-directory (&optional directory)
-  ; An example function to resolve a directory in a user command, before passing it to fzf. Here if
-  ; directory is undefined, attempt to use the projectile root. Users can define their own as
-  ; desired
-  ;
-  ; Example usage:
-  ; (defun fzf-example ()
-  ;   (fzf
-  ;    (lambda (x) (print x))
-  ;    (fzf/resolve-directory directory)))
+                                        ; An example function to resolve a directory in a user command, before passing it to fzf. Here if
+                                        ; directory is undefined, attempt to use the projectile root. Users can define their own as
+                                        ; desired
+                                        ;
+                                        ; Example usage:
+                                        ; (defun fzf-example ()
+                                        ;   (fzf
+                                        ;    (lambda (x) (print x))
+                                        ;    (fzf/resolve-directory directory)))
   (cond
    (directory directory)
    ((fboundp #'projectile-project-root) (condition-case err (projectile-project-root) (error default-directory)))
    (t "")
+   )
   )
-)
 
 ;; Prebuilt user commands
 (defun fzf-switch-buffer ()
@@ -236,53 +237,56 @@
    (seq-filter
     (lambda (x) (not (string-prefix-p " " x)))
     (mapcar (function buffer-name) (buffer-list))
+    )
+   (lambda (x) (set-window-buffer nil x))
    )
-    (lambda (x) (set-window-buffer nil x))
   )
-)
 
 (defun fzf-find-file (&optional directory)
   (interactive)
   (let ((d (fzf/resolve-directory directory)))
     (fzf
-    (lambda (x)
-        (let ((f (expand-file-name x d)))
-        (when (file-exists-p f)
-            (find-file f))))
-    d
+     (lambda (x)
+       (let ((f (expand-file-name x d)))
+         (when (file-exists-p f)
+           (find-file f))))
+     d
+     )
     )
   )
-)
 
 (defun fzf-find-file-in-dir (directory)
   (interactive "sDirectory: ")
   (fzf-find-file directory)
-)
+  )
 
-(defun fzf-recentf ()
+(defun fzf-recentf-old ()
   (interactive)
   (fzf-with-entries recentf-list
-    (lambda (f) (when (file-exists-p f) (find-file f))))
-)
+                    (lambda (f) (progn
+                                  ;; (message "DBG: %s" f )
+                                  (find-file-existing f)))))
 
 (defun fzf-grep (search &optional directory)
   (interactive "sGrep: ")
   (let ((d (fzf/resolve-directory directory)))
     (fzf-with-command
-    (format "grep -rHn %s ." search)
-    (lambda (x)
-      (let* ((parts (split-string x ":"))
-             (f (expand-file-name (nth 0 parts) d)))
-        (when (file-exists-p f)
-          (find-file f)
-          (goto-line (string-to-number (nth 1 parts))))))
-    d)))
+     (format "grep -rHn %s ." search)
+     (lambda (x)
+       (let* ((parts (split-string x ":"))
+              (f (expand-file-name (nth 0 parts) d)))
+         (when (file-exists-p f)
+           (find-file f)
+           (goto-line (string-to-number (nth 1 parts))))))
+     d)))
 
 (defun fzf-test ()
+  (interactive)
   (fzf-with-entries
    (list "a" "b" "c")
    (lambda (x) (print x))))
 
+(load-file (concat (file-name-directory load-file-name) "/counsel-fzf.el")) ; @helpwanted Perhaps there is a better way?
 (provide 'fzf)
 
 ;;; fzf.el ends here
