@@ -15,7 +15,8 @@ respectively."
            (when (get-buffer name)
              (kill-buffer name))
            (setq counsel--async-last-command cmd)
-           (let* ((buf (get-buffer-create name))
+           (let* ((process-connection-type nil)
+                  (buf (get-buffer-create name))
                   (proc (if (listp cmd)
                             (apply #'start-file-process name buf cmd)
                           (start-file-process-shell-command name buf cmd)
@@ -24,33 +25,31 @@ respectively."
              (setq counsel--async-start counsel--async-time)
              (set-process-sentinel proc (or sentinel #'counsel--async-sentinel))
              (set-process-filter proc (or filter #'counsel--async-filter))
-             (when t ;; (boundp 'night/counsel--stdin)
+             (when (boundp 'night/counsel--stdin)
                (progn
-                 (message "DBG: %s, %s" buf proc)
-                 ;; (process-send-string buf (or night/counsel--stdin "EMPTY STDIN"))
-                 (process-send-string proc "EMPTY STDIN\n")
-                 (process-send-string proc "EMPTY STDIN\n")
+                 ;; (message "DBG: %s, %s" buf proc)
+                 (process-send-string buf (or night/counsel--stdin ""))
                  (process-send-eof proc)
                  ))
-             proc)))
+             proc))
+         )
 ;;;
-(comment (defun night/helper-counsel-fzf-entries (str)
-           (let ((entries night/counsel--fzf-entries))
-             (setq ivy--old-re (ivy--regex-fuzzy str))
-             (setq night/counsel--stdin (mapconcat (lambda (x) x) entries "\n"))
-             (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
-               (counsel--async-command
-                (format
-                 ;; "cat"
-                 (concat "fzf_in.dash -f %s")
-                 str)
-                ;; (format (concat  "echo %s | " counsel-fzf-cmd) (shell-quote-argument (mapconcat (lambda (x) x) entries "\n")) str)
-                ;; (format "echo hi %s wow | cat" str)
-                )))
-           nil))
-
+(comment
+ (defun night/helper-counsel-fzf-entries (str)
+   (let ((entries night/counsel--fzf-entries))
+     (setq ivy--old-re (ivy--regex-fuzzy str))
+     (setq night/counsel--stdin (mapconcat (lambda (x) x) entries "\n"))
+     (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
+       (counsel--async-command
+        (list "fzf_in.dash" "-f" str)
+        ;; (format (concat  "echo %s | " counsel-fzf-cmd) (shell-quote-argument (mapconcat (lambda (x) x) entries "\n")) str)
+        ;; (format "echo hi %s wow | cat" str)
+        )))
+   nil)
+ )
+;;;
 (if load-file-name
-  (setq night/fzf-cmd (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
+    (setq night/fzf-cmd (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
 (defun night/helper-counsel-fzf-entries (str)
   (let ((entries night/counsel--fzf-entries))
     (setq ivy--old-re (ivy--regex-fuzzy str))
@@ -73,8 +72,8 @@ respectively."
 ;;;
 (if (stringp (getenv "NIGHTDIR"))
     (setq vfiles (let
-                     ;; `ec $codeglob | sd -s '|' '\\|'`
-                     ((re "\\.\\(m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\)$"))
+                     ;; `ec $textglob | sd -s '|' '\\|'`
+                     ((re "\\.\\(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml\\)$"))
                    (-concat
                     (directory-files-recursively (getenv "NIGHTDIR") re)
                     (directory-files-recursively (getenv "nightNotes") re)
