@@ -44,6 +44,9 @@
 ;;; Code:
 
 (require 'subr-x)
+(require 'f)
+(require 'dash)
+
 
 (defgroup fzf nil
   "Configuration options for fzf.el"

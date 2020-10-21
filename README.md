@@ -1,14 +1,20 @@
-# fzf.el [![MELPA](https://melpa.org/packages/fzf-badge.svg)](https://melpa.org/#/fzf)
+This fork also needs https://github.com/rejeep/f.el and https://github.com/magnars/dash.el installed. You'll need https://github.com/abo-abo/swiper/ installed to use functions that use `counsel`; I plan to eventually make all the functions use that, so install that as well.
+
+To install this package itself, just clone the repository and use `load-file` on `fzf.el`.
+
+# Original Readme
+
+## fzf.el [![MELPA](https://melpa.org/packages/fzf-badge.svg)](https://melpa.org/#/fzf)
 
 An Emacs front-end for [fzf][1].
 
 ![demo](https://cloud.githubusercontent.com/assets/306502/12380684/ca0a6648-bd46-11e5-9091-841b282874e4.gif)
 
-# installation
+## installation
 
 fzf.el can be installed through [MELPA][2].
 
-# usage
+## usage
 
 fzf.el comes with some example commands to try out
 
@@ -49,7 +55,7 @@ Or more exiciting: [fzf-find-file](https://github.com/seenaburns/fzf.el/blob/mas
     d)))
 ```
 
-# license
+## license
 
 GPL3
 
