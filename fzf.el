@@ -62,10 +62,12 @@
   :type 'string
   :group 'fzf)
 
-(defcustom fzf/args "--color light --print-query"
+(defcustom fzf/args "--color light --print-query --reverse"
   "Additional arguments to pass into fzf."
   :type 'string
   :group 'fzf)
+;; (setq fzf/args "--color light --print-query --reverse")
+;; (setq fzf/args "--color light --print-query")
 
 (defcustom fzf/position-bottom t
   "Set the position of the fzf window. Set to nil to position on top."
@@ -118,8 +120,10 @@
       (if (string= "0" exit-code)
                                         ; Run action on result of fzf if exit code is 0
           (let* ((text (buffer-substring-no-properties (point-min) (point-max)))
-                 (lines (split-string text "\n" t "\s*>\s+"))
-                 (target (car (last (butlast lines 1))))
+                 (lines (split-string text "\n" nil "\\(\s*>\s+\\)\\|\s*"))
+                 (target
+                  ;; (car (last (butlast lines 1))) ; for normal layout
+                  (car (cdr lines)))
                  )
                                         ; Kill fzf and restore windows
                                         ; Killing has to happen before applying the action so functions like swaping the buffer
@@ -127,6 +131,8 @@
             (kill-buffer "*fzf*")
             (jump-to-register :fzf-windows)
 
+
+            (message (format "lines %s" lines))
             (message (format "target %s" target))
             (funcall action target)
             )
@@ -289,7 +295,8 @@
    (list "a" "b" "c")
    (lambda (x) (print x))))
 
-(load-file (concat (file-name-directory load-file-name) "/counsel-fzf.el")) ; @helpwanted Perhaps there is a better way?
+(when load-file-name
+  (load-file (concat (file-name-directory load-file-name) "/counsel-fzf.el"))) ; @helpwanted Perhaps there is a better way?
 (provide 'fzf)
 
 ;;; fzf.el ends here
