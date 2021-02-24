@@ -55,6 +55,8 @@ respectively."
     (setq ivy--old-re (ivy--regex-fuzzy str))
     (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
       (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
+      ; @bug https://emacs.stackexchange.com/questions/63507/how-to-run-commands-locally-even-when-on-tramp
+      ; The problem is that nightFzf.txt is created locally but the command runs on the remote server.
       (counsel--async-command
        (list night/fzf-cmd "-f" str)
        )))
