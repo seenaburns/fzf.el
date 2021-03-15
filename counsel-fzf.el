@@ -36,7 +36,8 @@ respectively."
 ;;;
 (comment
  (defun night/helper-counsel-fzf-entries (str)
-   (let ((entries night/counsel--fzf-entries))
+   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
+         (entries night/counsel--fzf-entries))
      (setq ivy--old-re (ivy--regex-fuzzy str))
      (setq night/counsel--stdin (mapconcat (lambda (x) x) entries "\n"))
      (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
@@ -51,7 +52,8 @@ respectively."
 (if load-file-name
     (setq night/fzf-cmd (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
 (defun night/helper-counsel-fzf-entries (str)
-  (let ((entries night/counsel--fzf-entries))
+  (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
+        (entries night/counsel--fzf-entries))
     (setq ivy--old-re (ivy--regex-fuzzy str))
     (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
       (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
