@@ -99,6 +99,7 @@ respectively."
                  ;; (message "DBG: %s" f )
                  (find-file-existing f)))))
 ;;;
+;; @bug https://github.com/abo-abo/swiper/issues/2830 previous ivy-read dynamic collection pollutes new calls to ivy-read
 (defun night/fzf-M-x (&optional initial-input)
   "Ivy version of `execute-extended-command'.
 Optional INITIAL-INPUT is the initial input in the minibuffer.
