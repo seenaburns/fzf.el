@@ -50,7 +50,8 @@ respectively."
  )
 ;;;
 (if load-file-name
-    (setq night/fzf-cmd (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
+    (setq night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
+  (setq night/fzf-cmd-args '()))
 (defun night/helper-counsel-fzf-entries (str)
   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
@@ -60,7 +61,7 @@ respectively."
       ; @bug https://emacs.stackexchange.com/questions/63507/how-to-run-commands-locally-even-when-on-tramp
       ; The problem is that nightFzf.txt is created locally but the command runs on the remote server.
       (counsel--async-command
-       (list night/fzf-cmd "-f" str)
+       (-concat night/fzf-cmd night/fzf-cmd-args (list "-f" str))
        )))
   nil)
 (defun night/counsel-fzf-with-entries (entries &optional  action prompt)
