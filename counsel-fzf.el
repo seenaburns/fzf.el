@@ -50,8 +50,8 @@ respectively."
  )
 ;;;
 (if load-file-name
-    (setq night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
-  (setq night/fzf-cmd-args '()))
+    (progn (setq night/fzf-cmd (list (concat (file-name-directory load-file-name) "/fzf_in2.dash")))
+           (setq night/fzf-cmd-args '())))
 (defun night/helper-counsel-fzf-entries (str)
   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
@@ -81,6 +81,7 @@ respectively."
                      ((re "\\.\\(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml\\)$"))
                    (-concat
                     (directory-files-recursively (getenv "NIGHTDIR") re)
+                    (directory-files-recursively (getenv "DOOMDIR") re)
                     (directory-files-recursively (getenv "nightNotes") re)
                     (directory-files-recursively (concat (getenv "codedir") "/nodejs") re)
                     (directory-files-recursively (concat (getenv "codedir") "/lua") re)
