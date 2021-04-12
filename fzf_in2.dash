@@ -1,3 +1,4 @@
 #!/usr/bin/env dash
-cat /tmp/nightFzf.txt | fzf "$@"
+input="${1:?}" ; shift
+cat "$input" | fzf "${@}"
 exit 0

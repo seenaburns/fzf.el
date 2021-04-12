@@ -56,15 +56,20 @@ respectively."
   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
     (setq ivy--old-re (ivy--regex-fuzzy str))
-    (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
-      (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
-      ; @bug https://emacs.stackexchange.com/questions/63507/how-to-run-commands-locally-even-when-on-tramp
-      ; The problem is that nightFzf.txt is created locally but the command runs on the remote server.
+    (cond
+     ((equal entries "MAGIC_CLIPBOARD_READ")
       (counsel--async-command
-       (-concat night/fzf-cmd night/fzf-cmd-args (list "-f" str))
-       )))
+       (-concat night/fzf-cmd (list (getenv "CLIPBOARD_RECORD_FILE")) night/fzf-cmd-args (list "-f" str "--read0" "--tac" "--tiebreak=index")))
+      )
+     (t (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
+          (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
+                                        ; @bug https://emacs.stackexchange.com/questions/63507/how-to-run-commands-locally-even-when-on-tramp
+                                        ; The problem is that nightFzf.txt is created locally but the command runs on the remote server.
+          (counsel--async-command
+           (-concat night/fzf-cmd (list "/tmp/nightFzf.txt") night/fzf-cmd-args (list "-f" str))
+           )))))
   nil)
-(defun night/counsel-fzf-with-entries (entries &optional  action prompt)
+(defun night/counsel-fzf-with-entries (entries &optional action prompt)
   (interactive)
   (setq night/counsel--fzf-entries entries)
   (ivy-read (or prompt "")
@@ -72,6 +77,7 @@ respectively."
             :initial-input ""
             ;; :re-builder #'ivy--regex-fuzzy
             :dynamic-collection t
+            :unwind #'counsel-delete-process
             :action (or action #'counsel-fzf-action)
             :caller 'counsel-fzf))
 ;;;
@@ -101,7 +107,7 @@ respectively."
                  ;; (message "DBG: %s" f )
                  (find-file-existing f)))))
 ;;;
-;; @bug https://github.com/abo-abo/swiper/issues/2830 previous ivy-read dynamic collection pollutes new calls to ivy-read
+;; @solvedBug https://github.com/abo-abo/swiper/issues/2830 previous ivy-read dynamic collection pollutes new calls to ivy-read : use `:unwind #'counsel-delete-process`
 (defun night/fzf-M-x (&optional initial-input)
   "Ivy version of `execute-extended-command'.
 Optional INITIAL-INPUT is the initial input in the minibuffer.
@@ -132,4 +138,32 @@ when available, in that order of precedence."
               :dynamic-collection t
               :keymap counsel-describe-map
               :initial-input initial-input
+              :unwind #'counsel-delete-process
               :caller 'counsel-M-x)))
+
+;;;
+(defun night/counsel-clipboard ()
+  "Interactively paste. Multiple selections are, of course, possible (see ivy-mark). Use C-o to see other options including copying the selection."
+  (interactive)
+  ;; let doesn't work for this
+  (setq night/counsel--fzf-entries "MAGIC_CLIPBOARD_READ")
+  (ivy-read "Clipboard: "
+            #'night/helper-counsel-fzf-entries
+            :require-match t
+            :history 'counsel-register-history
+            :action #'insert-for-yank
+            :multi-action #'night/insert-multiple
+            :dynamic-collection t
+            :unwind #'counsel-delete-process
+            :caller 'counsel-register))
+
+(defun night/insert-multiple (items)
+  (insert-for-yank
+   (mapconcat (lambda (x) x) items "\n")
+   )
+  )
+;; (map! :leader "zp" #'night/counsel-clipboard)
+ (map! :nvig "C-p" #'night/counsel-clipboard)
+;; (map! :nvig "C-v" #'night/counsel-clipboard)
+
+;;;
