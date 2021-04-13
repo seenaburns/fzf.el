@@ -55,19 +55,22 @@ respectively."
 (defun night/helper-counsel-fzf-entries (str)
   (let ((default-directory "/")        ; TRAMP: The point is default-directory. If it is local, your command runs locally
         (entries night/counsel--fzf-entries))
-    (setq ivy--old-re (ivy--regex-fuzzy str))
     (cond
      ((equal entries "MAGIC_CLIPBOARD_READ")
+      ;; (setq ivy--old-re (ivy--regex-fuzzy str)) ; too slow
+      (setq ivy--old-re "")
       (counsel--async-command
-       (-concat night/fzf-cmd (list (getenv "CLIPBOARD_RECORD_FILE")) night/fzf-cmd-args (list "-f" str "--read0" "--tac" "--tiebreak=index")))
+       (-concat night/fzf-cmd (list (getenv "CLIPBOARD_RECORD_FILE")) night/fzf-cmd-args (list "-f" str "--read0" "--print0" "--tac" "--tiebreak=index")))
       )
-     (t (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
-          (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
+     (t
+      (setq ivy--old-re (ivy--regex-fuzzy str))
+      (let ((night/counsel--stdin (mapconcat (lambda (x) x) entries "\n")))
+        (f-write-text night/counsel--stdin 'utf-8 "/tmp/nightFzf.txt")
                                         ; @bug https://emacs.stackexchange.com/questions/63507/how-to-run-commands-locally-even-when-on-tramp
                                         ; The problem is that nightFzf.txt is created locally but the command runs on the remote server.
-          (counsel--async-command
-           (-concat night/fzf-cmd (list "/tmp/nightFzf.txt") night/fzf-cmd-args (list "-f" str))
-           )))))
+        (counsel--async-command
+         (-concat night/fzf-cmd (list "/tmp/nightFzf.txt") night/fzf-cmd-args (list "-f" str))
+         )))))
   nil)
 (defun night/counsel-fzf-with-entries (entries &optional action prompt)
   (interactive)
@@ -142,6 +145,8 @@ when available, in that order of precedence."
               :caller 'counsel-M-x)))
 
 ;;;
+(defvar counsel-clipboard-history nil
+  "History for `night/counsel-clipboard'.")
 (defun night/counsel-clipboard ()
   "Interactively paste. Multiple selections are, of course, possible (see ivy-mark). Use C-o to see other options including copying the selection."
   (interactive)
@@ -150,16 +155,34 @@ when available, in that order of precedence."
   (ivy-read "Clipboard: "
             #'night/helper-counsel-fzf-entries
             :require-match t
-            :history 'counsel-register-history
-            :action #'insert-for-yank
+            ;; :history 'counsel-clipboard-history
+            :action #'night/insert-from-clipboard
             :multi-action #'night/insert-multiple
             :dynamic-collection t
             :unwind #'counsel-delete-process
-            :caller 'counsel-register))
+            ;; :caller 'counsel-register
+            :caller 'night/counsel-clipboard
+            ))
 
+(add-to-list 'counsel-async-split-string-re-alist '(night/counsel-clipboard . "\x00"))
+(add-to-list 'ivy-re-builders-alist '(night/counsel-clipboard . ivy--regex-plus))
+
+
+(defun night/insert-from-clipboard (input)
+  (let ((items (if (listp input)
+                   input
+                 (list input)
+                 )))
+   (dolist (item items)
+     (let ((parts (split-string item "" t)))
+       (insert-for-yank (car parts))
+       )))
+  (redraw-display)                      ; good for emojis
+  )
 (defun night/insert-multiple (items)
-  (insert-for-yank
-   (mapconcat (lambda (x) x) items "\n")
+  (night/insert-from-clipboard
+   items
+   ;; (mapconcat (lambda (x) x) items "\n")
    )
   )
 ;; (map! :leader "zp" #'night/counsel-clipboard)
