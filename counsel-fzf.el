@@ -164,9 +164,10 @@ when available, in that order of precedence."
             :caller 'night/counsel-clipboard
             ))
 
+(after! (counsel)
 (add-to-list 'counsel-async-split-string-re-alist '(night/counsel-clipboard . "\x00"))
 (add-to-list 'ivy-re-builders-alist '(night/counsel-clipboard . ivy--regex-plus))
-
+)
 
 (defun night/insert-from-clipboard (input)
   (let ((items (if (listp input)
