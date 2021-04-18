@@ -165,20 +165,26 @@ when available, in that order of precedence."
             ))
 
 (after! (counsel)
-(add-to-list 'counsel-async-split-string-re-alist '(night/counsel-clipboard . "\x00"))
-(add-to-list 'ivy-re-builders-alist '(night/counsel-clipboard . ivy--regex-plus))
-)
+  (add-to-list 'counsel-async-split-string-re-alist '(night/counsel-clipboard . "\x00"))
+  (add-to-list 'ivy-re-builders-alist '(night/counsel-clipboard . ivy--regex-plus))
+  )
 
 (defun night/insert-from-clipboard (input)
   (let ((items (if (listp input)
                    input
-                 (list input)
-                 )))
-   (dolist (item items)
-     (let ((parts (split-string item "" t)))
-       (insert-for-yank (car parts))
-       )))
-  (redraw-display)                      ; good for emojis
+                 (list input))))
+    ;; See evil-visual-paste
+    (when (evil-visual-state-p)
+      ;; (z fsay hello)
+      (evil-delete evil-visual-beginning
+                   evil-visual-end
+                   (evil-visual-type)
+                   (unless evil-kill-on-visual-paste ?_)))
+
+    (dolist (item items)
+      (let ((parts (split-string item "" t)))
+        (insert-for-yank (car parts)))))
+  (redraw-display) ;; good for emojis
   )
 (defun night/insert-multiple (items)
   (night/insert-from-clipboard
@@ -187,7 +193,7 @@ when available, in that order of precedence."
    )
   )
 ;; (map! :leader "zp" #'night/counsel-clipboard)
- (map! :nvig "C-p" #'night/counsel-clipboard)
+(map! :nvig "C-p" #'night/counsel-clipboard)
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
 ;;;
