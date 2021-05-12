@@ -179,7 +179,8 @@ when available, in that order of precedence."
 (defun night/insert-from-clipboard (input)
   (let ((items (if (listp input)
                    input
-                 (list input))))
+                 (list input)))
+        (res ""))
     ;; See evil-visual-paste
     (when (evil-visual-state-p)
       ;; (z fsay hello)
@@ -190,9 +191,11 @@ when available, in that order of precedence."
 
     (dolist (item items)
       (let ((parts (split-string item "" t)))
-        (insert-for-yank (car parts)))))
-  (redraw-display) ;; good for emojis
-  )
+        (setq res (concat res (car parts)))))
+    (insert-for-yank res)
+    (kill-new res)
+    (redraw-display) ;; good for emojis
+    ))
 (defun night/insert-multiple (items)
   (night/insert-from-clipboard
    items
