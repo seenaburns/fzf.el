@@ -91,27 +91,39 @@ respectively."
     '()
     )
   )
-(if (and (stringp (getenv "NIGHTDIR")))
+;;;
+(setq vfiles '())
+(defun night/vfiles-init ()
+  (interactive)
+  (when (and (stringp (getenv "NIGHTDIR")))
     (setq vfiles (let
                      ;; `ec $textglob | sd -s '|' '\\|'`
                      ((re "\\.(txt\\|md\\|org\\|m\\|cpp\\|h\\|c\\|applescript\\|as\\|osa\\|nu\\|nush\\|el\\|ss\\|scm\\|lisp\\|rkt\\|py\\|jl\\|scala\\|sc\\|kt\\|kotlin\\|java\\|clj\\|cljs\\|rkt\\|js\\|rs\\|zsh\\|dash\\|bash\\|sh\\|ml\\|php\\|lua\\|glsl\\|frag\\|go\\|ini\\|json\\|cson\\|toml\\|conf\\|plist\\|xml)$"))
-                   (-concat
-                    (night/dir-list (getenv "NIGHTDIR") re)
-                    (night/dir-list (getenv "DOOMDIR") re)
-                    (night/dir-list (getenv "nightNotes") re)
-                    (night/dir-list (concat (getenv "codedir") "/nodejs") re)
-                    (night/dir-list (concat (getenv "codedir") "/lua") re)
-                    (night/dir-list (concat (getenv "codedir") "/python") re)
-                    (night/dir-list (concat (getenv "codedir") "/uni") re)
-                    (night/dir-list (concat (getenv "codedir") "/rust") re)
-                    (night/dir-list (concat (getenv "codedir") "/golang") re))))
-  (setq vfiles '()))
-;; (nconc recentf-list vfiles) ; adds vfiles to the end of recentf-list
+                   (mapcar #'abbreviate-file-name ;; terrible @perf, but idk how to improve it. So for now, we can just call this manually save it to the recentf list.
+                           (-concat
+                            (night/dir-list (getenv "NIGHTDIR") re)
+                            (night/dir-list (getenv "DOOMDIR") re)
+                            (night/dir-list (getenv "nightNotes") re)
+                            (night/dir-list (concat (getenv "codedir") "/nodejs") re)
+                            (night/dir-list (concat (getenv "codedir") "/lua") re)
+                            (night/dir-list (concat (getenv "codedir") "/python") re)
+                            (night/dir-list (concat (getenv "codedir") "/uni") re)
+                            (night/dir-list (concat (getenv "codedir") "/rust") re)
+                            (night/dir-list (concat (getenv "codedir") "/golang") re)))))
+    (nconc recentf-list vfiles)         ; adds vfiles to the end of recentf-list
+    (recentf-cleanup)
+    (recentf-save-list)
+    ))
+
 (defun night/fzf-recentf ()
   (interactive)
   (night/counsel-fzf-with-entries
    ;; recentf-list
-   (-concat recentf-list vfiles)
+   (if vfiles
+       (-concat recentf-list vfiles)
+     (progn
+       ;; (z bello)
+       recentf-list))
    ;; vfiles
    (lambda (f) (progn
                  ;; (message "DBG: %s" f )
