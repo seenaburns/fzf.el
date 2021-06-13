@@ -297,6 +297,6 @@
 
 (when load-file-name
   (load-file (concat (file-name-directory load-file-name) "/counsel-fzf.el"))) ; @helpwanted Perhaps there is a better way?
+;;;
 (provide 'fzf)
-
 ;;; fzf.el ends here

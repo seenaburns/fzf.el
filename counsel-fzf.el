@@ -1,5 +1,9 @@
 ;;; gitmodules/fzf.el/counsel-fzf.el -*- lexical-binding: t; -*-
 
+(defvar counsel-recent-files-history nil
+  "History for `counsel-recent-files-history'.")
+(defvar counsel-fzf-history nil
+  "General history for counsel fzf commands that have not used a more specific history.")
 ;;;
 (comment (defun counsel--async-command-1 (cmd &optional sentinel filter name)
            "Start and return new counsel process by calling CMD.
@@ -72,7 +76,7 @@ respectively."
          (-concat night/fzf-cmd (list "/tmp/nightFzf.txt") night/fzf-cmd-args (list "-f" str))
          )))))
   nil)
-(defun night/counsel-fzf-with-entries (entries &optional action prompt)
+(defun night/counsel-fzf-with-entries (entries &optional action prompt history)
   (interactive)
   (setq night/counsel--fzf-entries entries)
   (ivy-read (or prompt "")
@@ -80,6 +84,7 @@ respectively."
             :initial-input ""
             ;; :re-builder #'ivy--regex-fuzzy
             :dynamic-collection t
+            :history (or history 'counsel-fzf-history)
             :unwind #'counsel-delete-process
             :action (or action #'counsel-fzf-action)
             :caller 'counsel-fzf))
@@ -127,7 +132,8 @@ respectively."
    ;; vfiles
    (lambda (f) (progn
                  ;; (message "DBG: %s" f )
-                 (find-file-existing f)))))
+                 (find-file-existing f)))
+   counsel-recent-files-history))
 ;;;
 ;; @solvedBug https://github.com/abo-abo/swiper/issues/2830 previous ivy-read dynamic collection pollutes new calls to ivy-read : use `:unwind #'counsel-delete-process`
 (defun night/fzf-M-x (&optional initial-input)
@@ -174,7 +180,7 @@ when available, in that order of precedence."
   (ivy-read "Clipboard: "
             #'night/helper-counsel-fzf-entries
             :require-match t
-            ;; :history 'counsel-clipboard-history
+            :history 'counsel-clipboard-history
             :action #'night/insert-from-clipboard
             :multi-action #'night/insert-multiple
             :dynamic-collection t
@@ -219,3 +225,4 @@ when available, in that order of precedence."
 ;; (map! :nvig "C-v" #'night/counsel-clipboard)
 
 ;;;
+(provide 'counsel-fzf)
